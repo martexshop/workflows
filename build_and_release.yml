@@ -1,0 +1,49 @@
+name: Build and Release EXE
+
+on:
+  push:
+    branches:
+      - main  # veya kullanmakta olduğunuz ana dal
+
+jobs:
+  build:
+    runs-on: windows-latest  # Windows üzerinde çalıştığınızı varsayalım
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt  # Gereksinimlerinizi yükleyin
+
+      - name: Build EXE
+        run: pyinstaller main.py --onefile --name uygulama.exe
+        # 'main.py' ve 'uygulama.exe' yerine kendi dosya adınızı ve .py dosyanızı belirtin
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v1.0.0  # Sürüm numarasını ve etiket adını burada belirtin
+          release_name: Release v1.0.0  # Sürüm adını burada belirtin
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/uygulama.exe
+          asset_name: uygulama.exe
+          asset_content_type: application/octet-stream
